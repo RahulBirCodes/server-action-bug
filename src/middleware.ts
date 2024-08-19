@@ -35,15 +35,15 @@ export default async function middleware(req: NextRequest) {
     searchParams.length > 0 ? `?${searchParams}` : ""
   }`;
 
-  // rewrite root application to `/home` folder
-  if (
-    hostname === "localhost:3000" ||
-    hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN
-  ) {
-    return NextResponse.rewrite(
-      new URL(`/home${path === "/" ? "" : path}`, req.url),
-    );
-  }
+  // // rewrite root application to `/home` folder
+  // if (
+  //   hostname === "localhost:3000" ||
+  //   hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN
+  // ) {
+  //   return NextResponse.rewrite(
+  //     new URL(`/home${path === "/" ? "" : path}`, req.url),
+  //   );
+  // }
 
   // rewrite everything else to `/[domain]/[slug] dynamic route
   return NextResponse.rewrite(new URL(`/${hostname}${path}`, req.url), {
