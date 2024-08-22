@@ -17,6 +17,13 @@ export const config = {
 
 
 export default async function middleware(req: NextRequest) {
+  // console.log('INCOMING REQUEST IS:', req);
+  const nextAction = req.headers.get('next-action')
+  console.log('HAS NEXT ACTION')
+  if (nextAction !== null) {
+    return NextResponse.next()
+  }
+
   const url = req.nextUrl;
 
   // set header to access url in server components
