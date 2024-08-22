@@ -11,26 +11,23 @@ export const config = {
      * 5. / root route
      */
     "/",
-    "/((?!auth/|api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)",
+    "/((?!auth/|api/|_next/|_static/|temp-images|_vercel|[\\w-]+\\.\\w+).*)",
   ],
 };
 
 
 export default async function middleware(req: NextRequest) {
-  console.log('INCOMING REQUEST IS:', req);
-  const nextAction = req.headers.get('next-action')
-  // console.log('HAS NEXT ACTION')
-  if (nextAction !== null) {
-    return NextResponse.next()
-  }
-
   const url = req.nextUrl;
 
   // set header to access url in server components
   const newHeaders = new Headers(req.headers);
   newHeaders.set("x-url", req.url);
 
-  // get hostname of request (e.g demo.localhost:3000), does not change what's in header but extracts domain
+  if (req.headers.get('next-action')) {
+    newHeaders.set('content-type', 'text/x-component')
+  }
+
+  // get hostname of request (demo.localhost:3000), does not change what's in header but extracts domain
   // replaces .localhost:3000 with the production root domain
   const hostname = req.headers
     .get("host")!
@@ -42,15 +39,22 @@ export default async function middleware(req: NextRequest) {
     searchParams.length > 0 ? `?${searchParams}` : ""
   }`;
 
-  // // rewrite root application to `/home` folder
-  // if (
-  //   hostname === "localhost:3000" ||
-  //   hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN
-  // ) {
-  //   return NextResponse.rewrite(
-  //     new URL(`/home${path === "/" ? "" : path}`, req.url),
-  //   );
-  // }
+  if (req.headers.get('next-action')) {
+    newHeaders.set('content-type', 'text/x-component')
+  }
+
+  // rewrite root application to `/home` folder
+  if (
+    hostname === "localhost:3000" ||
+    hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN
+  ) {
+    // console.log('REROUTING verification request page:', req);
+    // path will contain subdomain even when it reaches host server (set * catch on vercel) but it ignores it
+    // can continue routing to normal paths since new redirects and requests will hit middleware again
+    return NextResponse.rewrite(
+      new URL(`/home${path === "/" ? "" : path}`, req.url),
+    );
+  }
 
   // rewrite everything else to `/[domain]/[slug] dynamic route
   return NextResponse.rewrite(new URL(`/${hostname}${path}`, req.url), {
